@@ -41,7 +41,7 @@ export function ListaModelos() {
       <header className="tela__topo">
         <div>
           <h1>Modelos de laudo</h1>
-          <p className="suave">Monte qualquer laudo: escolha os campos e veja a folha pronta enquanto cria.</p>
+          <p className="suave">{plural(modelos.length, 'modelo', 'modelos')} · {plural(exames.filter((x) => x.modeloId).length, 'exame ligado', 'exames ligados')}</p>
         </div>
         <div className="tela__acoes">
           <button className="botao botao--primario" onClick={() => setNovo(true)}><Icone nome="mais" /> Novo modelo</button>

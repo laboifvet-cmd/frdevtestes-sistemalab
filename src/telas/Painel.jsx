@@ -6,11 +6,6 @@ import { real, realCurto, hoje, dataExtenso, diaSemana, mesDe, mesAnterior, mesN
 import { ChipStatus, ChipPrazo } from './comum.jsx';
 import NovaEntrada from './NovaEntrada.jsx';
 
-function saudacao() {
-  const h = new Date().getHours();
-  return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
-}
-
 function GraficoEntradas({ entradas }) {
   const h = hoje();
   const dias = [];
@@ -40,7 +35,7 @@ function GraficoEntradas({ entradas }) {
 }
 
 export default function Painel() {
-  const { entradas, lab, clientes } = useDados();
+  const { entradas, clientes } = useDados();
   const [nova, setNova] = useState(false);
   const h = hoje();
   const mes = mesDe(h);
@@ -74,11 +69,10 @@ export default function Painel() {
     <div className="tela">
       <header className="tela__topo">
         <div>
-          <p className="olho">{diaSemana(h)}, {dataExtenso(h)}</p>
-          <h1>{saudacao()}{lab.responsavel?.nome ? ', ' + lab.responsavel.nome.replace(/^(Dra?\.)\s*/, '').split(' ')[0] : ''}</h1>
+          <h1>Painel</h1>
           <p className="suave">
-            {r.entradasHoje ? `${plural(r.entradasHoje, 'exame entrou', 'exames entraram')} hoje. ` : 'Nenhum exame entrou hoje ainda. '}
-            {r.andamento.length ? `${plural(r.andamento.length, 'laudo', 'laudos')} em andamento.` : ''}
+            <span className="olho">{diaSemana(h)}, {dataExtenso(h)}</span>
+            {' · '}{r.entradasHoje ? plural(r.entradasHoje, 'entrada hoje', 'entradas hoje') : 'nenhuma entrada hoje'}
           </p>
         </div>
         <div className="tela__acoes">
@@ -88,24 +82,24 @@ export default function Painel() {
 
       {r.atras.length > 0 && (
         <button className="faixa-alerta" onClick={() => ir('laudos')}>
-          <Icone nome="alerta" />
-          <span><strong>{plural(r.atras.length, 'laudo atrasado', 'laudos atrasados')}</strong> · o mais antigo venceu {dataCurta(r.atras[0].dataPrevista)} ({r.atras[0].numero}, {r.atras[0].paciente.nome})</span>
-          <span className="faixa-alerta__ir">Ver fila <Icone nome="voltar" tam={16} style={{ transform: 'rotate(180deg)' }} /></span>
+          <Icone nome="alerta" tam={16} />
+          <span><strong>{plural(r.atras.length, 'laudo atrasado', 'laudos atrasados')}.</strong> O mais antigo venceu em {dataCurta(r.atras[0].dataPrevista)}: <span className="mono">{r.atras[0].numero}</span>, {r.atras[0].paciente.nome}.</span>
+          <span className="faixa-alerta__ir">Abrir fila →</span>
         </button>
       )}
 
       <section className="kpis" aria-label="Resumo">
-        <Kpi icone="relogio" rotulo="Em andamento" valor={r.andamento.length} sub={r.hojeVence.length ? `${r.hojeVence.length} ${r.hojeVence.length === 1 ? 'vence' : 'vencem'} hoje` : 'nenhum vence hoje'} tom={r.atras.length ? 'alerta' : undefined} onClick={() => ir('laudos')} />
-        <Kpi icone="check" rotulo="Liberados hoje" valor={r.liberadosHoje.length} sub={`${r.prontosNaoEntregues.length} prontos para entregar`} onClick={() => ir('exames-liberado')} />
-        <Kpi icone="financeiro" rotulo={`Faturado em ${mesNome(mes).split(' ')[0]}`} valor={real(r.faturado)} sub={variacao === null ? `${r.doMes.length} exames` : `${variacao >= 0 ? '+' : ''}${variacao}% que o mesmo período do mês passado`} tom={variacao !== null && variacao < 0 ? 'baixa' : variacao > 0 ? 'alta' : undefined} onClick={() => ir('financeiro')} />
-        <Kpi icone="relogio" rotulo="A receber" valor={real(r.aReceber)} sub="exames ainda não pagos" onClick={() => ir('financeiro')} />
+        <Kpi rotulo="Em andamento" valor={r.andamento.length} sub={r.hojeVence.length ? `${r.hojeVence.length} ${r.hojeVence.length === 1 ? 'vence' : 'vencem'} hoje` : 'nenhum vence hoje'} tom={r.atras.length ? 'alerta' : undefined} onClick={() => ir('laudos')} />
+        <Kpi rotulo="Liberados hoje" valor={r.liberadosHoje.length} sub={`${r.prontosNaoEntregues.length} prontos para entregar`} onClick={() => ir('exames-liberado')} />
+        <Kpi rotulo={`Faturado em ${mesNome(mes).split(' ')[0]}`} valor={real(r.faturado)} sub={variacao === null ? `${r.doMes.length} exames` : `${variacao >= 0 ? '+' : ''}${variacao}% vs. mesmo período do mês anterior`} tom={variacao !== null && variacao < 0 ? 'baixa' : variacao > 0 ? 'alta' : undefined} onClick={() => ir('financeiro')} />
+        <Kpi rotulo="A receber" valor={real(r.aReceber)} sub="exames ainda não pagos" onClick={() => ir('financeiro')} />
       </section>
 
       <div className="grade-painel">
         <section className="cartao">
           <header className="cartao__topo">
-            <h2>Próximos prazos</h2>
-            <a className="botao botao--fantasma botao--peq" href="#laudos">Fila de laudos</a>
+            <h2>Próximos prazos <span className="suave">{r.andamento.length}</span></h2>
+            <a className="link" href="#laudos">Ver fila completa →</a>
           </header>
           {r.andamento.length === 0 ? (
             <Vazio icone="check" titulo="Nenhum laudo pendente" texto="Quando um exame der entrada, ele aparece aqui pela ordem do prazo." acao={<button className="botao" onClick={() => setNova(true)}>Dar entrada em um exame</button>} />
@@ -158,12 +152,6 @@ export default function Painel() {
         </div>
       </div>
 
-      <section className="atalhos" aria-label="Atalhos">
-        <button className="atalho" onClick={() => setNova(true)}><Icone nome="exames" /><span><strong>Nova entrada</strong><small>Registrar amostra recebida</small></span></button>
-        <a className="atalho" href="#laudos"><Icone nome="laudos" /><span><strong>Fazer laudos</strong><small>{r.andamento.length} na fila</small></span></a>
-        <a className="atalho" href="#modelos"><Icone nome="modelos" /><span><strong>Modelos de laudo</strong><small>Criar ou editar campos</small></span></a>
-        <a className="atalho" href="#financeiro"><Icone nome="financeiro" /><span><strong>Tabela de exames</strong><small>Preços e prazos</small></span></a>
-      </section>
 
       <NovaEntrada aberta={nova} onFechar={() => setNova(false)} />
     </div>

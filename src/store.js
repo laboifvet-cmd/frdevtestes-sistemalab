@@ -4,6 +4,7 @@ import { useSyncExternalStore } from 'react';
 import { dadosDeExemplo } from './seed.js';
 import { uid, hoje, somaDiasUteis, dataDe } from './util.js';
 import { valorInicial } from './campos.js';
+import { assinantesDoLaudo, nomesDe, equipeDeExemplo } from './equipe.js';
 
 const CHAVE = 'vetdevlab:v1';
 let estado = carregar();
@@ -15,7 +16,11 @@ function carregar() {
     const txt = localStorage.getItem(CHAVE);
     if (txt) {
       const d = JSON.parse(txt);
-      if (d && d.versao === 1 && Array.isArray(d.entradas)) return d;
+      if (d && d.versao === 1 && Array.isArray(d.entradas)) {
+        // dados salvos antes de existir a Equipe
+        if (!Array.isArray(d.lab.equipe)) d.lab.equipe = equipeDeExemplo();
+        return d;
+      }
     }
   } catch {
     /* navegador sem acesso ao armazenamento: segue só na memória */
@@ -130,7 +135,9 @@ export const acoes = {
       e.status = status;
       if (status === 'liberado' && !e.laudo.liberadoEm) {
         e.laudo.liberadoEm = hoje();
-        e.laudo.liberadoPor = d.lab.responsavel.nome;
+        const quem = assinantesDoLaudo(d.lab, e);
+        e.laudo.assinantes = quem.map((m) => m.id);
+        e.laudo.liberadoPor = nomesDe(quem);
       }
       if (status === 'em_analise' || status === 'recebido') {
         e.laudo.liberadoEm = null;
@@ -150,6 +157,25 @@ export const acoes = {
       if (!e) return;
       e.laudo.valores[campoId] = valor;
       if (e.status === 'recebido') e.status = 'em_analise';
+    });
+  },
+  definirAssinantes(id, ids) {
+    mudar((d) => {
+      const e = d.entradas.find((x) => x.id === id);
+      if (e) e.laudo.assinantes = ids;
+    });
+  },
+  salvarMembro(m) {
+    mudar((d) => {
+      d.lab.equipe = d.lab.equipe || [];
+      const i = d.lab.equipe.findIndex((x) => x.id === m.id);
+      if (i >= 0) d.lab.equipe[i] = m;
+      else d.lab.equipe.push(m);
+    });
+  },
+  excluirMembro(id) {
+    mudar((d) => {
+      d.lab.equipe = (d.lab.equipe || []).filter((x) => x.id !== id);
     });
   },
   trocarModelo(id, modeloId) {
@@ -249,6 +275,7 @@ export const acoes = {
   },
   importar(dados) {
     if (!dados || dados.versao !== 1 || !Array.isArray(dados.entradas)) throw new Error('Arquivo de cópia inválido.');
+    if (!Array.isArray(dados.lab?.equipe)) dados.lab.equipe = equipeDeExemplo();
     estado = dados;
     gravar();
     ouvintes.forEach((o) => o());

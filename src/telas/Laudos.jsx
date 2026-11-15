@@ -4,6 +4,7 @@ import { useDados, acoes, emAndamento, atrasado } from '../store.js';
 import { Icone, Vazio, Segmento, Confirmar, useAviso, useLargura } from '../ui.jsx';
 import { dataBR, dataCurta, hoje, plural, nomeArquivo, somaDias } from '../util.js';
 import { campoVazio } from '../campos.js';
+import { assinantesDoLaudo, podeAssinar } from '../equipe.js';
 import { FormLaudo } from '../FormLaudo.jsx';
 import { Laudo, FolhasEscaladas } from '../papel.jsx';
 import { gerarPdf } from '../pdf.js';
@@ -39,7 +40,7 @@ export function FilaLaudos() {
       <header className="tela__topo">
         <div>
           <h1>Laudos</h1>
-          <p className="suave">{fazer.length ? `${plural(fazer.length, 'laudo', 'laudos')} para fazer${atras ? `, ${atras} ${atras === 1 ? 'atrasado' : 'atrasados'}` : ''}.` : 'Nenhum laudo pendente.'}</p>
+          <p className="suave">{fazer.length ? `${plural(fazer.length, 'para fazer', 'para fazer')}${atras ? ` · ${atras} ${atras === 1 ? 'atrasado' : 'atrasados'}` : ''}` : 'Nenhum laudo pendente'}</p>
         </div>
         <div className="tela__acoes">
           <button className="botao" onClick={() => setNova(true)}><Icone nome="mais" /> Nova entrada</button>
@@ -114,6 +115,7 @@ export function EditorLaudo({ id }) {
   const modelo = modelos.find((m) => m.id === e.modeloId);
   const travado = e.status === 'liberado' || e.status === 'entregue';
   const pr = progresso(modelo, valores);
+  const assinam = assinantesDoLaudo(lab, e);
 
   const mudar = (campoId, v) => {
     setValores((o) => ({ ...o, [campoId]: v }));
@@ -124,6 +126,7 @@ export function EditorLaudo({ id }) {
 
   const liberar = () => {
     if (!modelo) return avisar('Escolha um modelo de laudo antes de liberar.', 'erro');
+    if (!assinam.length) return avisar('Cadastre um patologista em Equipe para assinar o laudo.', 'erro');
     const falta = modelo.campos.filter((c) => c.obrigatorio && campoVazio(c, valores[c.id])).map((c) => c.id);
     if (falta.length) {
       setFaltando(falta);
@@ -201,6 +204,28 @@ export function EditorLaudo({ id }) {
                   </select>
                 </label>
                 <button className="botao botao--fantasma botao--peq" onClick={() => setFicha(true)}><Icone nome="editar" tam={16} /> Dados do cabeçalho</button>
+              </div>
+              <div className="assinantes">
+                <span className="assinantes__rotulo">Assinam este laudo</span>
+                <div className="pilulas">
+                  {(lab.equipe || []).filter((m) => podeAssinar(m) || assinam.some((a) => a.id === m.id)).map((m) => {
+                    const on = assinam.some((a) => a.id === m.id);
+                    return (
+                      <label key={m.id} className={'pilula pilula--caixa' + (on ? ' ligada' : '')} title={m.assinatura ? '' : 'Sem assinatura cadastrada: sai só o nome'}>
+                        <input type="checkbox" checked={on} disabled={travado}
+                          onChange={(ev) => {
+                            const ids = assinam.map((a) => a.id);
+                            const novo = ev.target.checked ? [...ids, m.id] : ids.filter((x) => x !== m.id);
+                            if (!novo.length) return avisar('O laudo precisa de pelo menos uma assinatura.', 'erro');
+                            if (novo.length > 3) return avisar('Cabem até 3 assinaturas no laudo.', 'erro');
+                            acoes.definirAssinantes(e.id, novo);
+                          }} />
+                        {m.nome}{!m.assinatura && <span className="tom-aviso" aria-hidden="true">·</span>}
+                      </label>
+                    );
+                  })}
+                  {!(lab.equipe || []).some(podeAssinar) && <a className="link" href="#equipe">Cadastrar patologista →</a>}
+                </div>
               </div>
               {!travado && modelo && (
                 <div className="cab-prog">

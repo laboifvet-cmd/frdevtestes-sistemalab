@@ -1,6 +1,13 @@
 // Folhas A4: divide o conteúdo em páginas (medindo cada bloco) e desenha laudo, tabela de preços e fatura.
 import { useLayoutEffect, useRef, useState, useEffect, Fragment } from 'react';
 import { campoVazio } from './campos.js';
+import { assinantesDoLaudo } from './equipe.js';
+
+// cidade para a data do laudo, tirada do endereço ("… · Fortaleza - CE")
+export function cidadeDe(lab) {
+  const m = String(lab.endereco || '').split('·').pop().trim().match(/^([^-–,]+)/);
+  return (m && m[1].trim()) || 'Fortaleza';
+}
 import { dataBR, real, codigoVerificacao, dataExtenso, hoje, mesNome } from './util.js';
 
 // mistura a cor da marca com branco (o gerador de PDF não entende color-mix)
@@ -378,19 +385,24 @@ export function Laudo({ lab, modelo, entrada, valores, previa, sel }) {
     </div>
   );
   const blocos = blocosDoLaudo(modelo, valores, previa, sel);
+  const quem = assinantesDoLaudo(lab, e);
   blocos.push({
     chave: 'assinatura',
     no: (
-      <div className="pp-assina" style={{ '--cor': lab.cor }}>
+      <div className={'pp-assina pp-assina--' + Math.min(3, quem.length)} style={{ '--cor': lab.cor }}>
         <div className="pp-assina__data">
-          {liberado ? <>Fortaleza, {dataExtenso(e.laudo.liberadoEm)}.</> : <span className="pp-carimbo">Prévia · laudo ainda não liberado</span>}
+          {liberado ? <>{cidadeDe(lab)}, {dataExtenso(e.laudo.liberadoEm)}.</> : <span className="pp-carimbo">Prévia · laudo ainda não liberado</span>}
         </div>
-        <div className="pp-assina__quem">
-          {lab.responsavel.assinatura && liberado ? <img src={lab.responsavel.assinatura} alt="" /> : <span className="pp-assina__espaco" />}
-          <div className="pp-assina__linha" />
-          <strong>{lab.responsavel.nome}</strong>
-          <span>{lab.responsavel.titulo}</span>
-          <span>{lab.responsavel.crmv}</span>
+        <div className="pp-assina__pessoas">
+          {quem.map((m) => (
+            <div className="pp-assina__quem" key={m.id}>
+              {m.assinatura && liberado ? <img src={m.assinatura} alt="" /> : <span className="pp-assina__espaco" />}
+              <div className="pp-assina__linha" />
+              <strong>{m.nome}</strong>
+              {m.titulo && <span>{m.titulo}</span>}
+              {m.crmv && <span>{m.crmv}</span>}
+            </div>
+          ))}
         </div>
       </div>
     ),

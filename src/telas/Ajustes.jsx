@@ -38,7 +38,6 @@ export default function Ajustes() {
   useEffect(() => setL(structuredClone(lab)), [lab]);
   const mudou = JSON.stringify(l) !== JSON.stringify(lab);
   const set = (k, v) => setL((o) => ({ ...o, [k]: v }));
-  const setR = (k, v) => setL((o) => ({ ...o, responsavel: { ...o.responsavel, [k]: v } }));
 
   const baixarCopia = async () => {
     const blob = new Blob([JSON.stringify(pegar(), null, 1)], { type: 'application/json' });
@@ -59,7 +58,7 @@ export default function Ajustes() {
       <header className="tela__topo">
         <div>
           <h1>Ajustes</h1>
-          <p className="suave">Dados do laboratório que aparecem nos laudos, tabelas e fechamentos.</p>
+          <p className="suave">Dados do laboratório que saem nos laudos, tabelas e fechamentos</p>
         </div>
       </header>
 
@@ -93,13 +92,10 @@ export default function Ajustes() {
       </section>
 
       <section className="cartao">
-        <header className="cartao__topo"><h2>Responsável técnico(a)</h2></header>
-        <div className="form-grade form-grade--3">
-          <Campo rotulo="Nome">{(id) => <input id={id} value={l.responsavel.nome} onChange={(e) => setR('nome', e.target.value)} />}</Campo>
-          <Campo rotulo="Título">{(id) => <input id={id} value={l.responsavel.titulo} onChange={(e) => setR('titulo', e.target.value)} />}</Campo>
-          <Campo rotulo="CRMV">{(id) => <input id={id} value={l.responsavel.crmv} onChange={(e) => setR('crmv', e.target.value)} />}</Campo>
-        </div>
-        <Imagem rotulo="Assinatura digitalizada" dica="Aparece só em laudo liberado." valor={l.responsavel.assinatura} onChange={(v) => setR('assinatura', v)} alt={56} />
+        <header className="cartao__topo">
+          <h2>Laudo</h2>
+          <a className="link" href="#equipe">Patologistas e assinaturas ficam em Equipe →</a>
+        </header>
         <Campo rotulo="Texto do rodapé do laudo">{(id) => <textarea id={id} rows={2} value={l.rodape} onChange={(e) => set('rodape', e.target.value)} />}</Campo>
         <Interruptor ligado={l.demonstracao} onChange={(v) => set('demonstracao', v)} rotulo="Marca d’água “Demonstração” nos PDFs" dica="Desligue quando o laboratório for usar de verdade." />
       </section>

@@ -1,6 +1,9 @@
 // Dados de exemplo (fictícios) para a demonstração. Tudo é inventado.
 import { modelosProntos, valorInicial } from './campos.js';
+import { equipeDeExemplo } from './equipe.js';
 import { hoje, somaDias, ehDiaUtil, somaDiasUteis, dataDe, mesDe, mesAnterior } from './util.js';
+
+const NOMES_PAT = { 'p-marina': 'Dra. Marina Fontes', 'p-caio': 'Dr. Caio Albuquerque', 'p-helena': 'Dra. Helena Duarte' };
 
 function rng(semente) {
   let s = semente >>> 0;
@@ -192,7 +195,7 @@ export function dadosDeExemplo() {
       const restam = dias.length - 1 - idx; // dias úteis desde a entrada
       let status;
       if (dia === hojeIso) status = 'recebido';
-      else if (previsto < hojeIso) status = r() < 0.12 && restam < 14 ? 'em_analise' : r() < 0.7 ? 'entregue' : 'liberado';
+      else if (previsto < hojeIso) status = r() < 0.12 && restam < 14 ? 'em_analise' : restam > 8 || r() < 0.6 ? 'entregue' : 'liberado';
       else status = r() < 0.35 ? 'liberado' : r() < 0.5 ? 'recebido' : 'em_analise';
       const vet = cliente.vets.length ? pick(cliente.vets) : { nome: '', crmv: '' };
       const valor = cliente.precos[exame.id] ?? exame.valor;
@@ -225,6 +228,9 @@ export function dadosDeExemplo() {
       const liberadoEm = ['liberado', 'entregue'].includes(status)
         ? (previsto < hojeIso ? somaDiasUteis(dia, Math.max(1, exame.prazo - (r() < 0.8 ? 1 : 0))) : somaDiasUteis(dia, 1) > hojeIso ? hojeIso : somaDiasUteis(dia, 1))
         : null;
+      // quem assina: quase sempre um patologista; necropsia e alguns casos saem com dois
+      const p1 = pick(['p-marina', 'p-marina', 'p-caio', 'p-helena']);
+      const assin = modelo.id === 'm-necro' || r() < 0.15 ? [p1, p1 === 'p-caio' ? 'p-marina' : 'p-caio'] : [p1];
       const mesEntrada = mesDe(dia);
       const mesAtual = mesDe(hojeIso);
       let pagamento;
@@ -246,7 +252,7 @@ export function dadosDeExemplo() {
         historico: '',
         dataEntrada: dia, prazo: exame.prazo, dataPrevista: previsto, valor,
         status,
-        laudo: { valores, liberadoEm, liberadoPor: liberadoEm ? LAB_PADRAO.responsavel.nome : null },
+        laudo: { valores, liberadoEm, liberadoPor: liberadoEm ? assin.map((a) => NOMES_PAT[a]).join(' e ') : null, assinantes: assin },
         pagamento,
         criadoEm: dia,
       });
@@ -268,7 +274,7 @@ export function dadosDeExemplo() {
 
   return {
     versao: 1,
-    lab: structuredClone(LAB_PADRAO),
+    lab: { ...structuredClone(LAB_PADRAO), equipe: equipeDeExemplo() },
     clientes: structuredClone(CLIENTES),
     exames: EXAMES.map((e) => ({ ...e, historico: [{ data: somaDias(hojeIso, -200), valor: e.valor, motivo: 'Tabela inicial' }] })),
     modelos,

@@ -118,7 +118,7 @@ export default function Exames({ rota }) {
   const [busca, setBusca] = useState('');
   const [cliente, setCliente] = useState('');
   const [exame, setExame] = useState('');
-  const [nova, setNova] = useState(false);
+  const [nova, setNova] = useState(inicial === 'nova');
   const [aberta, setAberta] = useState(null);
 
   const base = useMemo(() => {
@@ -149,7 +149,7 @@ export default function Exames({ rota }) {
       <header className="tela__topo">
         <div>
           <h1>Exames</h1>
-          <p className="suave">Tudo o que deu entrada no laboratório.</p>
+          <p className="suave">{plural(entradas.filter(emAndamento).length, 'em andamento', 'em andamento')} · {plural(entradas.length, 'exame no total', 'exames no total')}</p>
         </div>
         <div className="tela__acoes">
           <button className="botao botao--primario" onClick={() => setNova(true)}><Icone nome="mais" /> Nova entrada</button>

@@ -495,7 +495,7 @@ export default function Financeiro() {
       <header className="tela__topo">
         <div>
           <h1>Financeiro</h1>
-          <p className="suave">Faturamento, cobranças, tabela de preços e clientes.</p>
+          <p className="suave">{plural(pend, 'exame a receber', 'exames a receber')}</p>
         </div>
       </header>
       <Segmento
