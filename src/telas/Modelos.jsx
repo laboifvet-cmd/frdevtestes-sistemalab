@@ -4,6 +4,7 @@ import { useDados, acoes } from '../store.js';
 import { Icone, Vazio, Segmento, Confirmar, Campo, Folha, useAviso, useLargura, ir, Ajuda } from '../ui.jsx';
 import { TIPOS, ORDEM_TIPOS, novoCampo, valorInicial, modelosProntos, modeloEmBranco } from '../campos.js';
 import { uid, dataBR, plural, hoje } from '../util.js';
+import { prefixoDe, nomeCompleto } from '../catalogo.js';
 import { FormLaudo } from '../FormLaudo.jsx';
 import { Laudo, FolhasEscaladas } from '../papel.jsx';
 
@@ -59,7 +60,7 @@ export function ListaModelos() {
                   <MiniFolha campos={m.campos} />
                   <strong>{m.nome || 'Modelo sem nome'}</strong>
                   <span className="meta">{plural(m.campos.filter((c) => c.tipo !== 'secao').length, 'campo', 'campos')}{m.atualizadoEm ? ` · editado em ${dataBR(m.atualizadoEm)}` : ''}</span>
-                  <span className={'meta' + (usam.length ? '' : ' tom-aviso')}>{usam.length ? 'Usado em: ' + usam.map((x) => x.nome).join(', ') : 'Ainda não está ligado a nenhum exame'}</span>
+                  <span className={'meta' + (usam.length ? '' : ' tom-aviso')}>{usam.length ? 'Usado em ' + plural(usam.length, 'exame', 'exames') + ': ' + usam.slice(0, 3).map(nomeCompleto).join(', ') + (usam.length > 3 ? '…' : '') : 'Ainda não está ligado a nenhum exame'}</span>
                 </a>
                 <div className="cartao-modelo__acoes">
                   <a className="botao botao--fantasma botao--peq" href={'#modelo-' + m.id}><Icone nome="editar" tam={16} /> Editar</a>
@@ -322,7 +323,7 @@ function Paleta({ onAdicionar }) {
 }
 
 export function EditorModelo({ id }) {
-  const { modelos, lab, exames } = useDados();
+  const { modelos, lab, exames, categorias } = useDados();
   const salvo = modelos.find((m) => m.id === id);
   const larg = useLargura();
   const avisar = useAviso();
@@ -404,7 +405,7 @@ export function EditorModelo({ id }) {
   const usam = exames.filter((x) => x.modeloId === m.id);
   const duas = larg > 1100;
   const tres = larg >= 1480;
-  const sigla = usam[0]?.sigla || 'EX';
+  const sigla = usam[0] ? prefixoDe(categorias, usam[0]) : 'EX';
   const entradaExemplo = {
     numero: `${sigla} ${hoje().slice(2, 4)}-0001`, clienteNome: 'Clínica de exemplo', vet: { nome: 'Dra. Exemplo', crmv: 'CRMV-CE 0000' }, tutor: { nome: 'Tutor de exemplo' },
     paciente: { nome: 'Paciente', especie: 'Canina', raca: 'SRD', sexo: 'Fêmea', idade: '8 anos' }, material: 'Material de exemplo', dataEntrada: hoje(), laudo: {},
@@ -452,15 +453,20 @@ export function EditorModelo({ id }) {
         <div className="campo">
           <span className="rotulo">Exames que usam este modelo</span>
           <div className="pilulas">
-            {exames.filter((x) => x.ativo || x.modeloId === m.id).map((x) => {
-              const on = x.modeloId === m.id;
-              return (
-                <label key={x.id} className={'pilula pilula--caixa' + (on ? ' ligada' : '')}>
-                  <input type="checkbox" checked={on} onChange={(e) => acoes.salvarExame({ ...x, modeloId: e.target.checked ? m.id : null })} />
-                  {x.nome}
-                </label>
-              );
-            })}
+            {usam.map((x) => (
+              <span key={x.id} className="etiqueta-tira">
+                {nomeCompleto(x)}
+                <button aria-label={`Desligar ${nomeCompleto(x)}`} onClick={() => acoes.salvarExame({ ...x, modeloId: null })}><Icone nome="fechar" tam={12} /></button>
+              </span>
+            ))}
+            <select className="select-peq" aria-label="Ligar outro exame" value="" onChange={(e) => { const x = exames.find((k) => k.id === e.target.value); if (x) acoes.salvarExame({ ...x, modeloId: m.id }); }}>
+              <option value="">+ Ligar exame…</option>
+              {categorias.map((c) => (
+                <optgroup key={c.id} label={c.nome}>
+                  {exames.filter((x) => x.categoriaId === c.id && x.modeloId !== m.id).map((x) => <option key={x.id} value={x.id}>{nomeCompleto(x)}</option>)}
+                </optgroup>
+              ))}
+            </select>
           </div>
           <small className="campo__dica">Ao dar entrada em um exame marcado, o laudo já abre neste modelo.</small>
         </div>
@@ -561,7 +567,7 @@ export function EditorModelo({ id }) {
         <a href="#modelos" className="botao botao--icone" aria-label="Voltar para os modelos"><Icone nome="voltar" /></a>
         <div className="laudo-topo__titulo">
           <h1>{m.nome || 'Modelo sem nome'}</h1>
-          <p className="meta">{usam.length ? 'Usado em: ' + usam.map((x) => x.nome).join(', ') : 'Ainda não está ligado a nenhum exame'}</p>
+          <p className="meta">{usam.length ? plural(usam.length, 'exame usa este modelo', 'exames usam este modelo') : 'Ainda não está ligado a nenhum exame'}</p>
         </div>
         <div className="laudo-topo__acoes">
           <span className={'salvo' + (estado === 'salvando' ? ' salvo--andando' : '')} aria-live="polite">{estado === 'salvando' ? 'Salvando…' : <><Icone nome="check" tam={14} /> Salvo</>}</span>

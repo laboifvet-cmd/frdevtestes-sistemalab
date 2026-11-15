@@ -1,7 +1,8 @@
 // Folhas A4: divide o conteúdo em páginas (medindo cada bloco) e desenha laudo, tabela de preços e fatura.
-import { useLayoutEffect, useRef, useState, useEffect, Fragment } from 'react';
+import { useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { campoVazio } from './campos.js';
 import { assinantesDoLaudo } from './equipe.js';
+import { prazoTexto } from './catalogo.js';
 
 // cidade para a data do laudo, tirada do endereço ("… · Fortaleza - CE")
 export function cidadeDe(lab) {
@@ -489,33 +490,92 @@ export function blocosDeTabela(chave, colunas, linhas, total, alinhamentos = [])
   return blocos;
 }
 
-export function TabelaPrecos({ lab, exames, cliente, vigencia }) {
+export function TabelaPrecos({ lab, exames, categorias = [], cliente, vigencia, titulo }) {
   const ativos = exames.filter((x) => x.ativo);
-  const linhas = ativos.map((x) => {
-    const esp = cliente?.precos?.[x.id];
-    const valor = esp !== undefined && esp !== '' && esp !== null ? Number(esp) : x.valor;
-    return [
-      <Fragment key="n"><strong>{x.nome}</strong>{esp !== undefined && esp !== '' && esp !== null && <em className="pp-esp"> preço especial</em>}</Fragment>,
-      x.sigla,
-      `${x.prazo} ${x.prazo === 1 ? 'dia útil' : 'dias úteis'}`,
-      real(valor),
-    ];
-  });
-  return (
-    <Documento
-      lab={lab}
-      titulo="Tabela de exames"
-      subtitulo={(cliente ? `Valores para ${cliente.nome} · ` : '') + `vigência a partir de ${dataBR(vigencia)}`}
-      ladoDireito={<div className="pp-num"><span>Exames</span><strong>{ativos.length}</strong></div>}
-      blocos={blocosDeTabela('t', [{ nome: 'Exame', larg: '2.6fr' }, { nome: 'Sigla', larg: '.6fr' }, { nome: 'Prazo do laudo', larg: '1.2fr' }, { nome: 'Valor', larg: '1fr' }], linhas, null, ['left', 'left', 'left', 'right'])}
-      notaFinal={
-        <>
-          Prazos contados em dias úteis a partir do recebimento da amostra no laboratório. Valores sujeitos a reajuste; exames já recebidos mantêm o valor da data de entrada.
-          {lab.telefone && <> Dúvidas: {lab.telefone}{lab.email ? ' · ' + lab.email : ''}.</>}
-        </>
-      }
-    />
+  const nome = titulo || `Tabela de exames ${String(vigencia).slice(0, 4)}`;
+  const contato = [lab.telefone, lab.email, lab.site].filter(Boolean);
+  const cabecalhoColunas = (
+    <div className="tp-colunas">
+      <span>Exame</span>
+      <span>Prazo <small>(dias úteis)</small></span>
+      <span>Valor</span>
+    </div>
   );
+  const primeiro = (
+    <div className="tp-topo" style={{ '--cor': lab.cor }}>
+      <div className="tp-faixa">
+        <div className="tp-faixa__marca">
+          <LogoLab lab={{ ...lab, cor: 'rgba(255,255,255,.16)' }} tam={46} />
+          <div>
+            <div className="tp-faixa__lab">{lab.nome}</div>
+            {lab.descricao && <div className="tp-faixa__desc">{lab.descricao}</div>}
+          </div>
+        </div>
+        <div className="tp-faixa__titulo">
+          <h1>{nome}</h1>
+          <span>{cliente ? `Valores para ${cliente.nome} · ` : ''}vigência a partir de {dataBR(vigencia)}</span>
+        </div>
+      </div>
+      {cabecalhoColunas}
+    </div>
+  );
+  const demais = (
+    <div className="tp-topo" style={{ '--cor': lab.cor }}>
+      <div className="tp-faixa tp-faixa--curta">
+        <span className="tp-faixa__lab">{lab.nome}</span>
+        <span>{nome}{cliente ? ` · ${cliente.nome}` : ''}</span>
+      </div>
+      {cabecalhoColunas}
+    </div>
+  );
+  const blocos = [];
+  const grupos = [...categorias.map((c) => ({ c, itens: ativos.filter((x) => x.categoriaId === c.id) })), { c: null, itens: ativos.filter((x) => !categorias.some((c) => c.id === x.categoriaId)) }].filter((g) => g.itens.length);
+  grupos.forEach(({ c, itens }) => {
+    const cor = c?.cor || '#3F4A55';
+    blocos.push({
+      chave: 'c-' + (c?.id || 'x'),
+      junto: true,
+      aperto: true,
+      no: (
+        <div className="tp-cat" style={{ background: cor }}>
+          <strong>{c?.nome || 'Outros exames'}</strong>
+          {c?.nota && <span>{c.nota}</span>}
+        </div>
+      ),
+    });
+    itens.forEach((x, i) => {
+      const esp = cliente?.precos?.[x.id];
+      const temEsp = esp !== undefined && esp !== '' && esp !== null;
+      const valor = temEsp ? real(Number(esp)) : x.sobConsulta ? 'sob consulta' : real(x.valor);
+      blocos.push({
+        chave: x.id,
+        aperto: i < itens.length - 1,
+        no: (
+          <div className="tp-linha" style={{ background: i % 2 ? misturar(cor, 0.07) : '#FFFFFF' }}>
+            <span className="tp-linha__nome">{x.nome}{x.detalhe && <small> ({x.detalhe})</small>}</span>
+            <span className="tp-linha__prazo">{prazoTexto(x, true) === 'no mesmo dia' ? 'mesmo dia' : prazoTexto(x, true)}</span>
+            <span className="tp-linha__valor">{valor}{temEsp && <em>especial</em>}</span>
+          </div>
+        ),
+      });
+    });
+  });
+  blocos.push({
+    chave: 'nota',
+    no: (
+      <div className="tp-nota">
+        Prazos em dias úteis, contados a partir do recebimento da amostra no laboratório. Valores sujeitos a reajuste; exames já recebidos mantêm o valor da data de entrada.
+        {lab.pix ? ` Pagamento por Pix: ${lab.pix}.` : ''}
+      </div>
+    ),
+  });
+  const rodape = (p, t) => (
+    <div className="tp-rodape" style={{ '--cor': lab.cor }}>
+      <span>{contato.join('   ·   ')}{lab.endereco ? '   ·   ' + lab.endereco : ''}</span>
+      <span>{p}/{t}</span>
+    </div>
+  );
+  return <Paginas primeiro={primeiro} demais={demais} blocos={blocos} rodape={rodape} marca={lab.demonstracao ? 'DEMONSTRAÇÃO' : null} cor={lab.cor} classe="tp" />;
 }
 
 export function Fatura({ lab, cliente, mes, itens }) {

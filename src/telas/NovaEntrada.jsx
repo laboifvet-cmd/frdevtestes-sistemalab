@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDados, acoes, precoPara } from '../store.js';
 import { Folha, Campo, Icone, Interruptor, useAviso, ir } from '../ui.jsx';
 import { hoje, real, somaDiasUteis, dataBR, plural, numBR } from '../util.js';
+import { prazoTexto, nomeCompleto } from '../catalogo.js';
+import { semAcento } from '../util.js';
 
 const ESPECIES = ['Canina', 'Felina', 'Equina', 'Bovina', 'Ave', 'Roedor', 'Réptil', 'Outra'];
 
@@ -17,7 +19,8 @@ function vazio(clienteId) {
 }
 
 export default function NovaEntrada({ aberta, onFechar, editar }) {
-  const { clientes, exames } = useDados();
+  const { clientes, exames, categorias } = useDados();
+  const [busca, setBusca] = useState('');
   const avisar = useAviso();
   const [f, setF] = useState(vazio());
   const [marcados, setMarcados] = useState([]);
@@ -38,12 +41,16 @@ export default function NovaEntrada({ aberta, onFechar, editar }) {
       setMarcados([]);
       setValores({});
       setVetOutro(false);
+      setBusca('');
     }
     setErros({});
   }, [aberta, editar]); // eslint-disable-line
 
   const cliente = clientes.find((c) => c.id === f.clienteId);
   const ativos = exames.filter((x) => x.ativo || x.id === editar?.exameId);
+  const termo = semAcento(busca.trim());
+  const visiveis = ativos.filter((x) => marcados.includes(x.id) || !termo || termo.split(/\s+/).every((p) => semAcento(nomeCompleto(x) + ' ' + (categorias.find((c) => c.id === x.categoriaId)?.nome || '')).includes(p)));
+  const grupos = [...categorias, null].map((c) => ({ c, itens: visiveis.filter((x) => (c ? x.categoriaId === c.id : !categorias.some((k) => k.id === x.categoriaId))) })).filter((g) => g.itens.length);
   const set = (caminho, v) =>
     setF((o) => {
       const n = structuredClone(o);
@@ -75,7 +82,7 @@ export default function NovaEntrada({ aberta, onFechar, editar }) {
       const exame = exames.find((x) => x.id === marcados[0]);
       acoes.editarEntrada(editar.id, {
         clienteId: f.clienteId, vet: f.vet, tutor: f.tutor, paciente: f.paciente, material: f.material, historico: f.historico,
-        dataEntrada: f.dataEntrada, exameId: exame.id, exameNome: exame.nome, prazo: exame.prazo, valor: Number(valores[exame.id] ?? precoPara(exame, cliente)),
+        dataEntrada: f.dataEntrada, exameId: exame.id, exameNome: nomeCompleto(exame), prazo: exame.prazo, valor: Number(valores[exame.id] ?? precoPara(exame, cliente)),
       });
       avisar('Dados da entrada atualizados.');
       onFechar();
@@ -167,41 +174,53 @@ export default function NovaEntrada({ aberta, onFechar, editar }) {
       <fieldset className="form-bloco">
         <legend><h3>{editar ? 'Exame' : 'Exames'}</h3></legend>
         {erros.exames && <small className="campo__erro">{erros.exames}</small>}
-        <ul className="escolha-exames">
-          {ativos.map((x) => {
-            const preco = precoPara(x, cliente);
-            const especial = cliente?.precos?.[x.id] !== undefined && cliente?.precos?.[x.id] !== '';
-            const on = marcados.includes(x.id);
-            return (
-              <li key={x.id} className={on ? 'ligado' : ''}>
-                <label>
-                  <input
-                    type={editar ? 'radio' : 'checkbox'}
-                    name="exame"
-                    checked={on}
-                    onChange={(e) => setMarcados((m) => (editar ? [x.id] : e.target.checked ? [...m, x.id] : m.filter((y) => y !== x.id)))}
-                  />
-                  <span className="escolha-exames__nome">
-                    <strong>{x.nome}</strong>
-                    <small>{x.prazo} {x.prazo === 1 ? 'dia útil' : 'dias úteis'} · {x.sigla}</small>
-                  </span>
-                </label>
-                {on ? (
-                  <span className="com-prefixo escolha-exames__valor">
-                    <span>R$</span>
-                    <input aria-label={`Valor de ${x.nome}`} inputMode="decimal" value={String(valores[x.id] ?? preco).replace('.', ',')}
-                      onChange={(e) => setValores((v) => ({ ...v, [x.id]: numBR(e.target.value) }))} />
-                  </span>
-                ) : (
-                  <span className="escolha-exames__preco">
-                    {real(preco)}
-                    {especial && <em>preço da clínica</em>}
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        {!editar && (
+          <div className="busca busca--peq">
+            <Icone nome="busca" tam={16} />
+            <input type="search" aria-label="Procurar exame" placeholder="Procurar exame (ex.: mastectomia, pele, necropsia)" value={busca} onChange={(e) => setBusca(e.target.value)} />
+          </div>
+        )}
+        {grupos.length === 0 && <p className="suave">Nenhum exame com “{busca}”.</p>}
+        {grupos.map(({ c, itens }) => (
+          <div key={c?.id || 'sem'} className="escolha-grupo">
+            <span className="escolha-grupo__titulo"><i style={{ background: c?.cor || '#888' }} />{c?.nome || 'Sem categoria'}</span>
+            <ul className="escolha-exames">
+              {itens.map((x) => {
+                const preco = precoPara(x, cliente);
+                const especial = cliente?.precos?.[x.id] !== undefined && cliente?.precos?.[x.id] !== '';
+                const on = marcados.includes(x.id);
+                return (
+                  <li key={x.id} className={on ? 'ligado' : ''}>
+                    <label>
+                      <input
+                        type={editar ? 'radio' : 'checkbox'}
+                        name="exame"
+                        checked={on}
+                        onChange={(e) => setMarcados((m) => (editar ? [x.id] : e.target.checked ? [...m, x.id] : m.filter((y) => y !== x.id)))}
+                      />
+                      <span className="escolha-exames__nome">
+                        <strong>{x.nome}{x.detalhe && <span className="suave"> · {x.detalhe}</span>}</strong>
+                        <small>{prazoTexto(x)}</small>
+                      </span>
+                    </label>
+                    {on ? (
+                      <span className="com-prefixo escolha-exames__valor">
+                        <span>R$</span>
+                        <input aria-label={`Valor de ${nomeCompleto(x)}`} inputMode="decimal" value={String(valores[x.id] ?? preco).replace('.', ',')}
+                          onChange={(e) => setValores((v) => ({ ...v, [x.id]: numBR(e.target.value) }))} />
+                      </span>
+                    ) : (
+                      <span className="escolha-exames__preco">
+                        {x.sobConsulta && !especial ? 'Sob consulta' : real(preco)}
+                        {especial && <em>preço da clínica</em>}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </fieldset>
 
       <div className="form-bloco">

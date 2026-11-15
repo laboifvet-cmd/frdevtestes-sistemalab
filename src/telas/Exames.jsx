@@ -4,6 +4,7 @@ import { useDados, acoes, emAndamento, atrasado, STATUS } from '../store.js';
 import { Icone, Folha, Vazio, Confirmar, useAviso, useLargura } from '../ui.jsx';
 import { real, hoje, dataBR, dataCurta, mesDe, mesAnterior, somaDias, semAcento, plural, quando } from '../util.js';
 import { ChipStatus, ChipPrazo } from './comum.jsx';
+import { nomeCompleto } from '../catalogo.js';
 import NovaEntrada from './NovaEntrada.jsx';
 
 const FILTROS = [
@@ -62,7 +63,7 @@ export function Ficha({ entrada, onFechar }) {
             </li>
           ))}
         </ol>
-        <p className="ficha-prazo"><ChipPrazo e={e} /> <span className="suave">Prazo: {dataBR(e.dataPrevista)} ({e.prazo} {e.prazo === 1 ? 'dia útil' : 'dias úteis'})</span></p>
+        <p className="ficha-prazo"><ChipPrazo e={e} /> <span className="suave">Prazo: {dataBR(e.dataPrevista)}</span></p>
 
         <dl className="ficha-dados">
           <div><dt>Paciente</dt><dd>{e.paciente.nome} · {[e.paciente.especie, e.paciente.raca, e.paciente.sexo, e.paciente.idade].filter(Boolean).join(' · ')}</dd></div>
@@ -109,7 +110,7 @@ export function Ficha({ entrada, onFechar }) {
 }
 
 export default function Exames({ rota }) {
-  const { entradas, clientes, exames } = useDados();
+  const { entradas, clientes, exames, categorias } = useDados();
   const larg = useLargura();
   const h = hoje();
   const inicial = rota.split('-')[1];
@@ -170,7 +171,7 @@ export default function Exames({ rota }) {
         </select>
         <select aria-label="Exame" value={exame} onChange={(e) => setExame(e.target.value)}>
           <option value="">Todos os exames</option>
-          {exames.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
+          {categorias.map((c) => <optgroup key={c.id} label={c.nome}>{exames.filter((x) => x.categoriaId === c.id).map((x) => <option key={x.id} value={x.id}>{nomeCompleto(x)}</option>)}</optgroup>)}
         </select>
       </section>
       <div className="chips-filtro" role="group" aria-label="Situação">

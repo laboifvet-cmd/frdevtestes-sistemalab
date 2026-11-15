@@ -43,7 +43,7 @@ export function assinaturaDeExemplo(nome, semente = 1) {
   const base = 66;
   let x = 14;
   let d = '';
-  partes.forEach((p, i) => {
+  partes.forEach((p) => {
     const alto = 30 + r() * 22;
     const larg = 14 + r() * 12;
     // maiúscula: haste alta com laçada

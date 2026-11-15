@@ -39,12 +39,12 @@ const CLIENTES = [
   {
     id: 'cl-farol', nome: 'Hospital Veterinário Farol Azul', tipo: 'clinica', cobranca: 'mensal', contato: 'Financeiro', telefone: '(85) 90000-0202',
     email: 'financeiro@farolazul.exemplo', endereco: 'Av. Beira Mar, 3000 · Mucuripe', vets: [{ nome: 'Dr. Ricardo Menezes', crmv: 'CRMV-CE 0003' }, { nome: 'Dra. Juliana Prado', crmv: 'CRMV-CE 0004' }, { nome: 'Dra. Bruna Teles', crmv: 'CRMV-CE 0005' }],
-    precos: { 'ex-cito': 100, 'ex-histo': 165 }, ativo: true,
+    precos: { 'ex-cito': 80, 'ex-histo': 95 }, ativo: true,
   },
   {
     id: 'cl-manda', nome: 'Clínica Mandacaru Pet', tipo: 'clinica', cobranca: 'mensal', contato: 'Dra. Lívia', telefone: '(85) 90000-0303',
     email: 'mandacarupet@exemplo', endereco: 'Rua do Sertão, 45 · Messejana', vets: [{ nome: 'Dra. Lívia Barros', crmv: 'CRMV-CE 0006' }],
-    precos: { 'ex-cito': 110 }, ativo: true,
+    precos: { 'ex-cito': 85 }, ativo: true,
   },
   {
     id: 'cl-jangada', nome: 'Consultório Jangada Vet', tipo: 'clinica', cobranca: 'por_exame', contato: 'Dr. Tiago', telefone: '(85) 90000-0404',
@@ -57,14 +57,54 @@ const CLIENTES = [
   },
 ];
 
+export const CATEGORIAS = [
+  { id: 'cat-cito', nome: 'Citologia', prefixo: 'CT', cor: '#6D4AA8', nota: '' },
+  { id: 'cat-histo', nome: 'Histopatologia', prefixo: 'HP', cor: '#1E7A66', nota: 'Avaliação de margens cirúrgicas e colorações especiais inclusas.' },
+  { id: 'cat-ihq', nome: 'Imuno-histoquímica', prefixo: 'IH', cor: '#2F5D9E', nota: 'Realizada sobre bloco de parafina do próprio laboratório ou enviado pela clínica.' },
+  { id: 'cat-necro', nome: 'Necropsia', prefixo: 'NC', cor: '#8A4B16', nota: 'O laudo final sai depois do histopatológico dos órgãos coletados.' },
+  { id: 'cat-hemato', nome: 'Hematologia', prefixo: 'HM', cor: '#B03A48', nota: '' },
+  { id: 'cat-serv', nome: 'Serviços', prefixo: 'SV', cor: '#3F4A55', nota: 'Agendamento pelo WhatsApp do laboratório.' },
+];
+
+const ex = (id, categoriaId, nome, detalhe, prazoMin, prazo, valor, modeloId, extra = {}) => ({ id, categoriaId, nome, detalhe, prazoMin, prazo, valor, modeloId, ativo: true, sobConsulta: false, ...extra });
 const EXAMES = [
-  { id: 'ex-histo', nome: 'Histopatológico', sigla: 'HP', valor: 180, prazo: 7, modeloId: 'm-histo', ativo: true },
-  { id: 'ex-histom', nome: 'Histopatológico com avaliação de margens', sigla: 'HP', valor: 230, prazo: 8, modeloId: 'm-histo', ativo: true },
-  { id: 'ex-cito', nome: 'Citopatológico', sigla: 'CT', valor: 120, prazo: 3, modeloId: 'm-cito', ativo: true },
-  { id: 'ex-rev', nome: 'Revisão de lâmina (segunda opinião)', sigla: 'RV', valor: 150, prazo: 5, modeloId: 'm-cito', ativo: true },
-  { id: 'ex-necro', nome: 'Necropsia', sigla: 'NC', valor: 450, prazo: 10, modeloId: 'm-necro', ativo: true },
-  { id: 'ex-hemo', nome: 'Hemograma completo', sigla: 'HM', valor: 45, prazo: 1, modeloId: 'm-hemo', ativo: true },
-  { id: 'ex-ihq', nome: 'Imuno-histoquímica (painel)', sigla: 'IH', valor: 650, prazo: 15, modeloId: 'm-histo', ativo: false },
+  ex('ex-cito', 'cat-cito', 'Citologia geral/oncológica', '', 0, 2, 90, 'm-cito'),
+  ex('ex-cito-ad', 'cat-cito', 'Citologia geral/oncológica', 'amostra adicional do mesmo paciente', 0, 2, 45, 'm-cito'),
+  ex('ex-cito-pele', 'cat-cito', 'Citologia de pele', '', 0, 1, 40, 'm-cito'),
+  ex('ex-raspado', 'cat-cito', 'Raspado de pele', '', 0, 1, 30, 'm-cito'),
+  ex('ex-ouvido', 'cat-cito', 'Citologia de ouvido', '', 0, 1, 40, 'm-cito'),
+  ex('ex-liq', 'cat-cito', 'Citologia de líquidos cavitários', 'ascítico, torácico, líquor', 0, 2, 90, 'm-cito'),
+  ex('ex-sinovial', 'cat-cito', 'Citologia de líquido sinovial', '', 0, 2, 90, 'm-cito'),
+  ex('ex-urina-cit', 'cat-cito', 'Citologia urinária', '', 0, 2, 85, 'm-cito'),
+  ex('ex-lavado', 'cat-cito', 'Citologia de lavado traqueobrônquico', '', 0, 2, 90, 'm-cito'),
+  ex('ex-leish', 'cat-cito', 'Pesquisa de amastigotas de Leishmania', 'medula óssea ou linfonodo', 0, 1, 85, 'm-cito'),
+  ex('ex-rev', 'cat-cito', 'Releitura de lâmina', 'segunda opinião', 0, 3, 120, 'm-cito'),
+  ex('ex-histo', 'cat-histo', 'Biópsia convencional', '1 peça', 5, 7, 110, 'm-histo'),
+  ex('ex-histo2', 'cat-histo', 'Biópsia convencional', '2 peças', 5, 7, 175, 'm-histo'),
+  ex('ex-histo3', 'cat-histo', 'Biópsia convencional', '3 peças', 5, 7, 245, 'm-histo'),
+  ex('ex-punch', 'cat-histo', 'Biópsia de pele', 'punch', 5, 7, 110, 'm-histo'),
+  ex('ex-endo', 'cat-histo', 'Biópsia endoscópica', 'estômago e intestino', 5, 7, 175, 'm-histo'),
+  ex('ex-baco', 'cat-histo', 'Baço', 'esplenectomia total', 5, 7, 140, 'm-histo'),
+  ex('ex-utero', 'cat-histo', 'Útero e ovários', '', 5, 7, 150, 'm-histo'),
+  ex('ex-testic', 'cat-histo', 'Testículos', 'direito e esquerdo', 5, 7, 150, 'm-histo'),
+  ex('ex-histom', 'cat-histo', 'Mastectomia unilateral', 'cadeia mamária e linfonodos regionais', 5, 8, 210, 'm-histo'),
+  ex('ex-mastbi', 'cat-histo', 'Mastectomia bilateral', 'cadeia mamária e linfonodos regionais', 5, 8, 280, 'm-histo'),
+  ex('ex-amput', 'cat-histo', 'Amputação de membro', '', 5, 8, 210, 'm-histo'),
+  ex('ex-osso', 'cat-histo', 'Fragmento ósseo', 'inclui descalcificação', 7, 10, 150, 'm-histo'),
+  ex('ex-relhisto', 'cat-histo', 'Releitura de histopatológico', 'lâminas e blocos de outro laboratório', 5, 7, 110, 'm-histo'),
+  ex('ex-ihq', 'cat-ihq', 'Painel de imuno-histoquímica', 'anticorpos conforme o caso', 0, 15, 0, 'm-histo', { sobConsulta: true }),
+  ex('ex-ihq-mast', 'cat-ihq', 'Imuno-histoquímica para mastocitoma', 'Ki-67 e KIT', 0, 15, 520, 'm-histo'),
+  ex('ex-necro', 'cat-necro', 'Necropsia', 'até 10 kg', 15, 20, 550, 'm-necro'),
+  ex('ex-necro2', 'cat-necro', 'Necropsia', '11 a 20 kg', 15, 20, 750, 'm-necro'),
+  ex('ex-necro3', 'cat-necro', 'Necropsia', '21 a 40 kg', 15, 20, 950, 'm-necro'),
+  ex('ex-necro4', 'cat-necro', 'Necropsia', 'acima de 40 kg', 15, 20, 1150, 'm-necro'),
+  ex('ex-orgaos', 'cat-necro', 'Órgãos de necropsia', 'coletados pela clínica', 7, 10, 320, 'm-histo'),
+  ex('ex-hemo', 'cat-hemato', 'Hemograma completo', '', 0, 1, 45, 'm-hemo'),
+  ex('ex-pesqhemo', 'cat-hemato', 'Pesquisa de hemoparasitas', 'esfregaço sanguíneo', 0, 1, 40, 'm-cito'),
+  ex('ex-mielo', 'cat-hemato', 'Mielograma', '', 3, 5, 160, 'm-cito'),
+  ex('ex-mielohemo', 'cat-hemato', 'Mielograma com hemograma', '', 3, 5, 190, 'm-cito'),
+  ex('ex-trans', 'cat-serv', 'Biópsia transcirúrgica', 'congelação, com patologista no centro cirúrgico', 0, 0, 650, 'm-histo'),
+  ex('ex-coleta', 'cat-serv', 'Coleta volante para citologia', 'coleta na clínica e análise', 0, 2, 150, 'm-cito'),
 ];
 
 const PACIENTES = [
@@ -176,7 +216,7 @@ export function dadosDeExemplo() {
     if (ehDiaUtil(d)) dias.push(d);
   }
 
-  const pesoExame = ['ex-histo', 'ex-histo', 'ex-histo', 'ex-histom', 'ex-cito', 'ex-cito', 'ex-cito', 'ex-cito', 'ex-hemo', 'ex-hemo', 'ex-rev', 'ex-necro'];
+  const pesoExame = ['ex-histo', 'ex-histo', 'ex-histo2', 'ex-histom', 'ex-punch', 'ex-baco', 'ex-cito', 'ex-cito', 'ex-cito', 'ex-cito-pele', 'ex-liq', 'ex-hemo', 'ex-hemo', 'ex-rev', 'ex-necro', 'ex-mielo'];
   const pesoCliente = ['cl-vetdev', 'cl-vetdev', 'cl-farol', 'cl-farol', 'cl-farol', 'cl-manda', 'cl-manda', 'cl-jangada', 'cl-part'];
   let pac = 0;
 
@@ -189,7 +229,8 @@ export function dadosDeExemplo() {
       const cliente = CLIENTES.find((c) => c.id === cliId);
       const [nomeP, especie, raca, sexo, idade] = PACIENTES[pac++ % PACIENTES.length];
       const ano = String(dataDe(dia).getFullYear()).slice(2);
-      const chave = exame.sigla + ano;
+      const prefixo = CATEGORIAS.find((c) => c.id === exame.categoriaId).prefixo;
+      const chave = prefixo + ano;
       seq[chave] = (seq[chave] || 0) + 1;
       const previsto = somaDiasUteis(dia, exame.prazo);
       const restam = dias.length - 1 - idx; // dias úteis desde a entrada
@@ -242,8 +283,8 @@ export function dadosDeExemplo() {
 
       entradas.push({
         id: 'e' + entradas.length + '-' + chave,
-        numero: `${exame.sigla} ${ano}-${String(seq[chave]).padStart(4, '0')}`,
-        exameId: exame.id, exameNome: exame.nome, modeloId: modelo.id,
+        numero: `${prefixo} ${ano}-${String(seq[chave]).padStart(4, '0')}`,
+        exameId: exame.id, exameNome: exame.detalhe ? `${exame.nome} (${exame.detalhe})` : exame.nome, modeloId: modelo.id,
         clienteId: cliente.id, clienteNome: cliente.nome,
         vet: { ...vet },
         tutor: { nome: TUTORES[Math.floor(r() * TUTORES.length)], telefone: '' },
@@ -273,9 +314,10 @@ export function dadosDeExemplo() {
   }
 
   return {
-    versao: 1,
+    versao: 2,
     lab: { ...structuredClone(LAB_PADRAO), equipe: equipeDeExemplo() },
     clientes: structuredClone(CLIENTES),
+    categorias: structuredClone(CATEGORIAS),
     exames: EXAMES.map((e) => ({ ...e, historico: [{ data: somaDias(hojeIso, -200), valor: e.valor, motivo: 'Tabela inicial' }] })),
     modelos,
     entradas: entradas.reverse(),

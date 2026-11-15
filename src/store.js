@@ -4,9 +4,10 @@ import { useSyncExternalStore } from 'react';
 import { dadosDeExemplo } from './seed.js';
 import { uid, hoje, somaDiasUteis, dataDe } from './util.js';
 import { valorInicial } from './campos.js';
+import { prefixoDe, nomeCompleto } from './catalogo.js';
 import { assinantesDoLaudo, nomesDe, equipeDeExemplo } from './equipe.js';
 
-const CHAVE = 'vetdevlab:v1';
+const CHAVE = 'vetdevlab:v2';
 let estado = carregar();
 const ouvintes = new Set();
 let avisoEspaco = null;
@@ -16,7 +17,7 @@ function carregar() {
     const txt = localStorage.getItem(CHAVE);
     if (txt) {
       const d = JSON.parse(txt);
-      if (d && d.versao === 1 && Array.isArray(d.entradas)) {
+      if (d && d.versao === 2 && Array.isArray(d.entradas)) {
         // dados salvos antes de existir a Equipe
         if (!Array.isArray(d.lab.equipe)) d.lab.equipe = equipeDeExemplo();
         return d;
@@ -65,9 +66,9 @@ export function precoPara(exame, cliente) {
   return especial !== undefined && especial !== null && especial !== '' ? Number(especial) : Number(exame.valor);
 }
 
-export function proximoNumero(sigla, dataIso, entradas = estado.entradas) {
+export function proximoNumero(prefixoExame, dataIso, entradas = estado.entradas) {
   const ano = String(dataDe(dataIso).getFullYear()).slice(2);
-  const prefixo = `${sigla} ${ano}-`;
+  const prefixo = `${prefixoExame} ${ano}-`;
   const maior = entradas
     .filter((e) => e.numero.startsWith(prefixo))
     .reduce((m, e) => Math.max(m, Number(e.numero.slice(prefixo.length)) || 0), 0);
@@ -100,8 +101,8 @@ export const acoes = {
         modelo?.campos.forEach((c) => (valores[c.id] = valorInicial(c)));
         const e = {
           id: uid('e'),
-          numero: proximoNumero(exame.sigla, dados.dataEntrada, d.entradas),
-          exameId: exame.id, exameNome: exame.nome, modeloId: modelo?.id || null,
+          numero: proximoNumero(prefixoDe(d.categorias, exame), dados.dataEntrada, d.entradas),
+          exameId: exame.id, exameNome: nomeCompleto(exame), modeloId: modelo?.id || null,
           clienteId: cliente.id, clienteNome: cliente.nome,
           vet: { ...dados.vet }, tutor: { ...dados.tutor }, paciente: { ...dados.paciente },
           material: dados.material || '', historico: dados.historico || '',
@@ -229,10 +230,30 @@ export const acoes = {
         const antes = d.exames[i];
         const hist = [...(antes.historico || [])];
         if (Number(antes.valor) !== Number(exame.valor)) hist.push({ data: hoje(), valor: Number(exame.valor), motivo: motivo || 'Ajuste manual' });
-        d.exames[i] = { ...exame, valor: Number(exame.valor), prazo: Number(exame.prazo), historico: hist };
+        d.exames[i] = { ...exame, valor: Number(exame.valor), prazo: Number(exame.prazo), prazoMin: Number(exame.prazoMin) || 0, historico: hist };
       } else {
-        d.exames.push({ ...exame, valor: Number(exame.valor), prazo: Number(exame.prazo), historico: [{ data: hoje(), valor: Number(exame.valor), motivo: 'Exame criado' }] });
+        d.exames.push({ ...exame, valor: Number(exame.valor), prazo: Number(exame.prazo), prazoMin: Number(exame.prazoMin) || 0, historico: [{ data: hoje(), valor: Number(exame.valor), motivo: 'Exame criado' }] });
       }
+    });
+  },
+  salvarCategoria(c) {
+    mudar((d) => {
+      const i = d.categorias.findIndex((x) => x.id === c.id);
+      if (i >= 0) d.categorias[i] = c;
+      else d.categorias.push(c);
+    });
+  },
+  excluirCategoria(id) {
+    mudar((d) => {
+      d.categorias = d.categorias.filter((x) => x.id !== id);
+    });
+  },
+  moverCategoria(id, passo) {
+    mudar((d) => {
+      const i = d.categorias.findIndex((x) => x.id === id);
+      const j = i + passo;
+      if (i < 0 || j < 0 || j >= d.categorias.length) return;
+      [d.categorias[i], d.categorias[j]] = [d.categorias[j], d.categorias[i]];
     });
   },
   reajusteEmLote(novosValores, motivo) {
@@ -274,7 +295,7 @@ export const acoes = {
     ouvintes.forEach((o) => o());
   },
   importar(dados) {
-    if (!dados || dados.versao !== 1 || !Array.isArray(dados.entradas)) throw new Error('Arquivo de cópia inválido.');
+    if (!dados || dados.versao !== 2 || !Array.isArray(dados.entradas)) throw new Error('Arquivo de cópia inválido ou de uma versão antiga do sistema.');
     if (!Array.isArray(dados.lab?.equipe)) dados.lab.equipe = equipeDeExemplo();
     estado = dados;
     gravar();

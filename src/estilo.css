@@ -628,6 +628,42 @@ kbd { font-family: var(--mono); font-size: 11px; line-height: 1; padding: 3px 5p
 .quadro-assina__dica { position: absolute; top: 70px; left: 0; right: 0; text-align: center; color: #9C9C97; font-size: 13px; pointer-events: none; }
 .quadro-assina__acoes { display: flex; gap: 6px; padding: 8px; background: var(--superficie-2); border-top: 1px solid var(--linha); flex-wrap: wrap; }
 
+/* tabela de exames na tela */
+.busca--peq { flex: 1 1 240px; }
+.tab-cat { background: var(--superficie); border: 1px solid var(--linha); border-radius: 12px; overflow: hidden; }
+.tab-cat__topo { display: flex; align-items: center; gap: 12px; padding: 12px 14px 12px 0; border-bottom: 1px solid var(--linha); }
+.tab-cat__cor { width: 4px; align-self: stretch; background: var(--cat); border-radius: 0 3px 3px 0; flex: none; }
+.tab-cat__nome { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.tab-cat__nome h2 { font-size: 14.5px; }
+.tab-cat__nome h2 .mono { font-weight: 400; font-size: 12px; margin-left: 4px; }
+.tab-cat__acoes { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
+.tab-cat__vazio { padding: 14px 18px; color: var(--fraco); font-size: 13px; }
+.tab-linhas { list-style: none; margin: 0; padding: 0; }
+.tab-linhas li + li { border-top: 1px solid var(--linha); }
+.tab-linha { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 170px 130px 110px; gap: 14px; align-items: baseline; padding: 9px 18px; border: 0; background: transparent; text-align: left; cursor: pointer; font-size: 13.5px; }
+.tab-linha:hover { background: var(--superficie-2); }
+.tab-linha__nome { min-width: 0; }
+.tab-linha__nome small { color: var(--fraco); font-size: 12.5px; }
+.tab-linha__nome .etiqueta { margin-left: 8px; }
+.tab-linha__modelo { color: var(--fraco); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab-linha__prazo { color: var(--suave); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tab-linha__valor { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.prazo-campos { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.prazo-campos .com-sufixo, .prazo-campos .com-prefixo { width: 160px; }
+.prazo-campos .com-sufixo input, .prazo-campos .com-prefixo input { height: 34px; padding: 0 10px; width: 100%; }
+.escolha-grupo { display: grid; gap: 6px; }
+.escolha-grupo__titulo { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: var(--suave); }
+.escolha-grupo__titulo i, .ponto-cat { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex: none; margin-right: 6px; vertical-align: 0; }
+.escolha-grupo__titulo i { margin: 0; }
+.etiqueta-tira { display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 4px 0 10px; border-radius: 7px; background: var(--acento-fundo); border: 1px solid var(--acento-linha); font-size: 13px; font-weight: 500; }
+.etiqueta-tira button { display: grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 5px; background: transparent; cursor: pointer; color: var(--suave); }
+.etiqueta-tira button:hover { background: var(--superficie); color: var(--tinta); }
+.select-peq { height: 30px; border: 1px dashed var(--linha-forte); border-radius: 7px; background: var(--superficie); padding: 0 8px; font-size: 13px; color: var(--suave); max-width: 100%; }
+.linha-cat td { background: var(--superficie-2); font-weight: 500; font-size: 12.5px; }
+.precos-cat { border-top: 1px solid var(--linha); }
+.precos-cat summary { cursor: pointer; padding: 10px 0; font-weight: 500; font-size: 13.5px; list-style-position: inside; }
+.precos-cat .lista-precos li:first-child { border-top: 0; }
+
 /* ---------- Financeiro ---------- */
 .barra-acoes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .grupo-cliente { gap: 10px; padding-bottom: 6px; }
@@ -720,6 +756,8 @@ kbd { font-family: var(--mono); font-size: 11px; line-height: 1; padding: 3px 5p
 
 /* ---------- Tablet ---------- */
 @media (max-width: 1180px) {
+  .tab-linha { grid-template-columns: minmax(0, 1fr) 130px 110px; }
+  .tab-linha__modelo { display: none; }
   .pessoa { grid-template-columns: 36px minmax(0, 1fr) 150px; }
   .pessoa__info { grid-column: 2 / -1; justify-content: flex-start; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -803,6 +841,13 @@ kbd { font-family: var(--mono); font-size: 11px; line-height: 1; padding: 3px 5p
   .linhas-receber li > :nth-child(3) { grid-area: valor; }
   .linhas-receber li > :last-child { grid-area: acao; }
   .grade-clientes { grid-template-columns: minmax(0, 1fr); }
+  .tab-cat__topo { flex-wrap: wrap; }
+  .tab-cat__acoes { width: 100%; justify-content: flex-start; padding-left: 16px; }
+  .tab-linha { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'nome valor' 'prazo prazo'; gap: 2px 12px; padding: 10px 16px; }
+  .tab-linha__nome { grid-area: nome; }
+  .tab-linha__valor { grid-area: valor; }
+  .tab-linha__prazo { grid-area: prazo; font-size: 12.5px; }
+  .tab-linha__modelo { display: none; }
   .pessoa { grid-template-columns: 36px minmax(0, 1fr); grid-template-areas: 'av nome' 'av assina' 'av info'; gap: 4px 12px; }
   .pessoa__avatar { grid-area: av; align-self: start; }
   .pessoa__nome { grid-area: nome; }

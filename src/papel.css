@@ -85,3 +85,34 @@
 .pp-lin span { min-width: 0; overflow-wrap: anywhere; }
 .pp-esp { font-style: normal; font-size: 10px; color: #B83E70; font-weight: 700; margin-left: 6px; }
 
+
+/* tabela de exames (preços) */
+.tp .papel-bloco { padding-bottom: 0; }
+.tp .papel-bloco:has(.tp-nota) { padding-top: 14px; }
+.tp-topo { margin: -44px -56px 0; }
+.tp-faixa { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 26px 56px 22px; background: var(--cor); color: #fff; }
+.tp-faixa__marca { display: flex; align-items: center; gap: 12px; }
+.tp-faixa__marca .papel-monograma { border: 1px solid rgba(255, 255, 255, .35); }
+.tp-faixa__lab { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+.tp-faixa__desc { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; opacity: .8; }
+.tp-faixa__titulo { text-align: right; display: grid; gap: 2px; }
+.tp-faixa__titulo h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; color: #fff; }
+.tp-faixa__titulo span { font-size: 11px; opacity: .85; }
+.tp-faixa--curta { padding: 12px 56px; font-size: 11px; }
+.tp-faixa--curta .tp-faixa__lab { font-size: 12px; }
+.tp-colunas { display: grid; grid-template-columns: 1fr 110px 110px; gap: 12px; margin: 16px 56px 8px; padding: 7px 10px; background: #1B2427; color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; border-radius: 3px; }
+.tp-colunas small { font-weight: 500; text-transform: none; letter-spacing: 0; opacity: .75; font-size: 9.5px; }
+.tp-colunas span:nth-child(2) { text-align: center; }
+.tp-colunas span:last-child { text-align: right; }
+.tp-cat { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding: 6px 10px; color: #fff; border-radius: 3px 3px 0 0; }
+.tp-cat strong { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; }
+.tp-cat span { font-size: 10px; opacity: .9; }
+.tp-linha { display: grid; grid-template-columns: 1fr 110px 110px; gap: 12px; align-items: baseline; padding: 5px 10px; font-size: 11.5px; border-bottom: 1px solid #ECEFF0; }
+.tp-linha__nome { color: #1B2427; }
+.tp-linha__nome small { font-size: 9.5px; color: #6A777B; }
+.tp-linha__prazo { text-align: center; font-variant-numeric: tabular-nums; color: #2B3538; }
+.tp-linha__valor { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: #1B2427; white-space: nowrap; }
+.tp-linha__valor em { display: block; font-style: normal; font-size: 8.5px; color: #C8305E; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.tp-nota { font-size: 10px; color: #4A5559; padding: 9px 12px; background: #F4F6F7; border-radius: 3px; line-height: 1.5; }
+.tp-rodape { display: flex; justify-content: space-between; gap: 16px; margin: 0 -56px -40px; padding: 11px 56px; background: var(--cor); color: #fff; font-size: 9.5px; white-space: pre; }
+.tp-rodape span:first-child { white-space: pre-wrap; }
