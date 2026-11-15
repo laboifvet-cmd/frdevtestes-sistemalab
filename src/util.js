@@ -162,10 +162,3 @@ export async function salvarArquivo(nome, blob) {
 export const nomeArquivo = (s) =>
   String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-// Código de verificação do laudo (só para mostrar; não é segurança)
-export function codigoVerificacao(txt) {
-  let h = 2166136261;
-  for (const ch of String(txt)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-  const s = (h >>> 0).toString(16).toUpperCase().padStart(8, '0');
-  return s.slice(0, 4) + '-' + s.slice(4);
-}

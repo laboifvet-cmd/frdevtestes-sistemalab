@@ -12,6 +12,7 @@ const ATALHOS = [
   { nome: 'Exames atrasados', rota: 'exames-atrasado', icone: 'alerta', chave: 'atrasados prazo' },
   { nome: 'Modelos de laudo', rota: 'modelos', icone: 'modelos', chave: 'modelos laudo criar campos' },
   { nome: 'Financeiro', rota: 'financeiro', icone: 'financeiro', chave: 'financeiro tabela preços receber clientes fatura' },
+  { nome: 'Conferir autenticidade de um laudo', rota: 'verificar', icone: 'check', chave: 'conferir verificar autenticidade codigo qr' },
   { nome: 'Equipe e assinaturas', rota: 'equipe', icone: 'usuarios', chave: 'equipe patologista assinatura colaborador crmv' },
   { nome: 'Ajustes do laboratório', rota: 'ajustes', icone: 'ajustes', chave: 'ajustes logo assinatura cor laboratório' },
 ];

@@ -8,6 +8,7 @@ Sistema modelo para laboratórios de patologia veterinária. Demonstração para
 - Padrão de entrega: bonito, organizado e funcional; conferir 390, 820 e 1280 px sem rolagem lateral.
 - Folha A4 (`src/papel.jsx`): o gerador de PDF (html2canvas) não entende `color-mix()`; cores do papel vêm de `varsDaCor`.
 - Tabela de exames (`src/catalogo.js`): categorias com prefixo do número do exame (HP, CT…), cor e observação; exame com detalhe, prazo em faixa (`prazoMin` a `prazo`) e "sob consulta". Dados salvos com `versao: 2` (chave `vetdevlab:v2`).
+- Conferência do laudo (`src/selo.js`, tela `Verificar.jsx`, rota `#verificar-<código>`): ao liberar, o laudo ganha impressão digital SHA-256 do conteúdo e código de 8 caracteres; QR code no PDF. Reabrir marca a versão como substituída (`laudo.versoes`). Na demo a conferência só acha laudos do mesmo navegador; no produto real a página consulta o servidor.
 - Hash de rota só `#nome` (letras, números e hífen): `#laudo-<id>`, `#modelo-<id>`, `#exames-atrasado`.
 - Visual (nov/2026): Geist + Geist Mono, base neutra, um destaque só (rosa eosina `--acento`), linhas finas no lugar de caixas, botão principal escuro. Estilos da interface em `src/estilo.css`; da folha A4 em `src/papel.css`.
 - Publicação: `git push` na `main` → GitHub Actions publica em https://laboifvet-cmd.github.io/frdevtestes-sistemalab/ (uns 2 min).

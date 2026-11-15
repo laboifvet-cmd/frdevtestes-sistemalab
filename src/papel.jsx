@@ -9,7 +9,24 @@ export function cidadeDe(lab) {
   const m = String(lab.endereco || '').split('·').pop().trim().match(/^([^-–,]+)/);
   return (m && m[1].trim()) || 'Fortaleza';
 }
-import { dataBR, real, codigoVerificacao, dataExtenso, hoje, mesNome } from './util.js';
+import { dataBR, real, dataExtenso, hoje, mesNome } from './util.js';
+import QRCode from 'qrcode';
+import { linkDeConferencia } from './selo.js';
+
+// QR code desenhado em SVG (nítido no PDF e sem esperar nada carregar)
+export function QR({ texto, tam = 76, cor = '#1B2427' }) {
+  let qr;
+  try { qr = QRCode.create(texto, { errorCorrectionLevel: 'M' }); } catch { return null; }
+  const n = qr.modules.size;
+  let d = '';
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (qr.modules.data[y * n + x]) d += `M${x + 2} ${y + 2}h1v1h-1z`;
+  return (
+    <svg width={tam} height={tam} viewBox={`0 0 ${n + 4} ${n + 4}`} shapeRendering="crispEdges" role="img" aria-label="QR code de conferência">
+      <rect width={n + 4} height={n + 4} fill="#fff" />
+      <path d={d} fill={cor} />
+    </svg>
+  );
+}
 
 // mistura a cor da marca com branco (o gerador de PDF não entende color-mix)
 function misturar(hex, pct) {
@@ -344,7 +361,7 @@ export function blocosDoLaudo(modelo, valores, previa, sel) {
 export function Laudo({ lab, modelo, entrada, valores, previa, sel }) {
   const e = entrada;
   const liberado = !!e?.laudo?.liberadoEm;
-  const cod = codigoVerificacao((e?.numero || 'previa') + (e?.laudo?.liberadoEm || ''));
+  const cod = e?.laudo?.codigo;
   const pac = e?.paciente || {};
   const dados = [
     ['Paciente', pac.nome], ['Espécie', pac.especie], ['Raça', pac.raca], ['Sexo', pac.sexo], ['Idade', pac.idade],
@@ -386,7 +403,9 @@ export function Laudo({ lab, modelo, entrada, valores, previa, sel }) {
     </div>
   );
   const blocos = blocosDoLaudo(modelo, valores, previa, sel);
-  const quem = assinantesDoLaudo(lab, e);
+  const quem = e?.laudo?.assinantesSalvos
+    ? e.laudo.assinantesSalvos.map((a) => ({ ...a, ...(lab.equipe || []).find((m) => m.id === a.id), nome: a.nome, crmv: a.crmv }))
+    : assinantesDoLaudo(lab, e);
   blocos.push({
     chave: 'assinatura',
     no: (
@@ -408,11 +427,27 @@ export function Laudo({ lab, modelo, entrada, valores, previa, sel }) {
       </div>
     ),
   });
+  if (liberado && cod) {
+    const link = linkDeConferencia(cod);
+    blocos.push({
+      chave: 'conferencia',
+      no: (
+        <div className="pp-verifica">
+          <QR texto={link} tam={74} />
+          <div>
+            <strong>Confira a autenticidade deste laudo</strong>
+            <span>Aponte a câmera do celular para o código ao lado ou acesse a página de conferência do laboratório e digite o código <b>{cod}</b>.</span>
+            <span className="pp-verifica__hash">Impressão digital (SHA-256): {e.laudo.hash?.slice(0, 32)}…</span>
+          </div>
+        </div>
+      ),
+    });
+  }
   const rodape = (p, t) => (
     <div className="pp-rodape" style={{ '--cor': lab.cor }}>
       <span className="pp-rodape__txt">{lab.rodape}</span>
       <span className="pp-rodape__pag">
-        {liberado && <>Verificação {cod} · </>}Página {p} de {t}
+        {liberado && cod && <>Código {cod} · </>}Página {p} de {t}
       </span>
     </div>
   );

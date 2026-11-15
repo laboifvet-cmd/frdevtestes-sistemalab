@@ -6,6 +6,15 @@ import { uid, hoje, somaDiasUteis, dataDe } from './util.js';
 import { valorInicial } from './campos.js';
 import { prefixoDe, nomeCompleto } from './catalogo.js';
 import { assinantesDoLaudo, nomesDe, equipeDeExemplo } from './equipe.js';
+import { carimbar } from './selo.js';
+
+// laudos liberados antes do selo de conferência ganham o seu
+function carimbarAntigos(d) {
+  d.entradas.forEach((e) => {
+    if (e.laudo?.liberadoEm && !e.laudo.codigo) carimbar(e, assinantesDoLaudo(d.lab, e));
+  });
+  return d;
+}
 
 const CHAVE = 'vetdevlab:v2';
 let estado = carregar();
@@ -20,13 +29,13 @@ function carregar() {
       if (d && d.versao === 2 && Array.isArray(d.entradas)) {
         // dados salvos antes de existir a Equipe
         if (!Array.isArray(d.lab.equipe)) d.lab.equipe = equipeDeExemplo();
-        return d;
+        return carimbarAntigos(d);
       }
     }
   } catch {
     /* navegador sem acesso ao armazenamento: segue só na memória */
   }
-  return dadosDeExemplo();
+  return carimbarAntigos(dadosDeExemplo());
 }
 
 let timer = null;
@@ -139,10 +148,15 @@ export const acoes = {
         const quem = assinantesDoLaudo(d.lab, e);
         e.laudo.assinantes = quem.map((m) => m.id);
         e.laudo.liberadoPor = nomesDe(quem);
+        carimbar(e, quem);
       }
-      if (status === 'em_analise' || status === 'recebido') {
+      if ((status === 'em_analise' || status === 'recebido') && e.laudo.liberadoEm) {
+        const ultima = (e.laudo.versoes || []).at(-1);
+        if (ultima) ultima.substituidaEm = hoje();
         e.laudo.liberadoEm = null;
         e.laudo.liberadoPor = null;
+        e.laudo.codigo = null;
+        e.laudo.hash = null;
       }
     });
   },
@@ -284,7 +298,7 @@ export const acoes = {
     });
   },
   restaurarExemplo() {
-    estado = dadosDeExemplo();
+    estado = carimbarAntigos(dadosDeExemplo());
     gravar();
     ouvintes.forEach((o) => o());
   },
@@ -297,6 +311,7 @@ export const acoes = {
   importar(dados) {
     if (!dados || dados.versao !== 2 || !Array.isArray(dados.entradas)) throw new Error('Arquivo de cópia inválido ou de uma versão antiga do sistema.');
     if (!Array.isArray(dados.lab?.equipe)) dados.lab.equipe = equipeDeExemplo();
+    carimbarAntigos(dados);
     estado = dados;
     gravar();
     ouvintes.forEach((o) => o());

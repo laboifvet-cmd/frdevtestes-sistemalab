@@ -11,6 +11,7 @@ import { ListaModelos, EditorModelo } from './telas/Modelos.jsx';
 import Financeiro from './telas/Financeiro.jsx';
 import Ajustes from './telas/Ajustes.jsx';
 import Equipe from './telas/Equipe.jsx';
+import Verificar from './telas/Verificar.jsx';
 
 const GRUPOS = [
   {
@@ -73,6 +74,14 @@ export default function App() {
     if (r === 'exames' && andamento) return <span className="menu__conta" title={`${andamento} em andamento`}>{andamento}</span>;
     return null;
   };
+
+  if (rota.startsWith('verificar')) {
+    return (
+      <ProvedorAviso>
+        <Verificar codigoInicial={rota.slice(10)} key={rota} />
+      </ProvedorAviso>
+    );
+  }
 
   return (
     <ProvedorAviso>

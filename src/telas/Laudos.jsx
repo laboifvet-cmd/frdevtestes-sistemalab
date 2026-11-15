@@ -237,7 +237,7 @@ export function EditorLaudo({ id }) {
             {travado && (
               <div className="faixa-info">
                 <Icone nome="cadeado" />
-                <span>Liberado em {dataBR(e.laudo.liberadoEm)} por {e.laudo.liberadoPor}. Para corrigir, reabra o laudo.</span>
+                <span>Liberado em {dataBR(e.laudo.liberadoEm)} por {e.laudo.liberadoPor}. Código de conferência <a className="mono" href={'#verificar-' + (e.laudo.codigo || '').replace('-', '')}>{e.laudo.codigo}</a>. Para corrigir, reabra o laudo: o código atual passa a constar como substituído.</span>
                 <button className="botao botao--peq" onClick={() => { acoes.mudarStatus(e.id, 'em_analise'); avisar('Laudo reaberto para edição.'); }}>Reabrir</button>
               </div>
             )}
