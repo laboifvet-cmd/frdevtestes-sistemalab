@@ -123,6 +123,7 @@ export function EditorLaudo({ id }) {
   };
 
   const liberar = () => {
+    if (!modelo) return avisar('Escolha um modelo de laudo antes de liberar.', 'erro');
     const falta = modelo.campos.filter((c) => c.obrigatorio && campoVazio(c, valores[c.id])).map((c) => c.id);
     if (falta.length) {
       setFaltando(falta);

@@ -35,11 +35,11 @@ export function Paginas({ primeiro, demais, blocos, rodape, marca, classe = '', 
   useLayoutEffect(() => {
     const m = medidor.current;
     if (!m) return;
-    const alt = (sel) => m.querySelector(sel)?.getBoundingClientRect().height || 0;
+    const alt = (sel) => m.querySelector(sel)?.offsetHeight || 0; // offsetHeight ignora a redução da prévia
     const hPrim = alt('[data-medir="primeiro"]');
     const hDem = alt('[data-medir="demais"]');
     const hRod = alt('[data-medir="rodape"]');
-    const hs = [...m.querySelectorAll('[data-bloco]')].map((el) => el.getBoundingClientRect().height);
+    const hs = [...m.querySelectorAll('[data-bloco]')].map((el) => el.offsetHeight);
     const util = A4.alt - A4.margemTopo - A4.margemBase - hRod - 8;
     const res = [];
     let atual = [];
@@ -69,7 +69,7 @@ export function Paginas({ primeiro, demais, blocos, rodape, marca, classe = '', 
           <div data-medir="primeiro">{primeiro}</div>
           <div data-medir="demais">{demais}</div>
           {blocos.map((b, i) => (
-            <div key={b.chave + '-m'} data-bloco={i} className="papel-bloco">{b.no}</div>
+            <div key={b.chave + '-m'} data-bloco={i} className={'papel-bloco' + (b.aperto ? ' papel-bloco--aperto' : '')}>{b.no}</div>
           ))}
           <div data-medir="rodape">{rodape(1, 1)}</div>
           <span hidden>{versaoFonte}</span>
@@ -82,7 +82,7 @@ export function Paginas({ primeiro, demais, blocos, rodape, marca, classe = '', 
             {p === 0 ? primeiro : demais}
             <div className="papel-conteudo">
               {idx.map((i) => blocos[i] && (
-                <div key={blocos[i].chave} className="papel-bloco">{blocos[i].no}</div>
+                <div key={blocos[i].chave} className={'papel-bloco' + (blocos[i].aperto ? ' papel-bloco--aperto' : '')}>{blocos[i].no}</div>
               ))}
             </div>
             {rodape(p + 1, total)}
@@ -260,8 +260,10 @@ function BlocoCampo({ c, v, previa }) {
 }
 
 // monta a lista de blocos de um laudo (campos de meia largura vão lado a lado)
-export function blocosDoLaudo(modelo, valores, previa) {
+export function blocosDoLaudo(modelo, valores, previa, sel) {
   const blocos = [];
+  const env = (c, no) => <div data-campo={c.id} className={'pp-campo' + (sel === c.id ? ' pp-sel' : '')}>{no}</div>;
+  const largo = (c) => ['secao', 'paragrafo', 'tabela', 'imagens', 'fixo'].includes(c.tipo);
   const visiveis = modelo.campos.filter((c) => previa || !(c.ocultarVazio && campoVazio(c, valores[c.id])) || c.tipo === 'secao' || c.tipo === 'fixo');
   // tira seções que ficaram sem nada embaixo
   const finais = visiveis.filter((c, i) => {
@@ -271,32 +273,31 @@ export function blocosDoLaudo(modelo, valores, previa) {
   });
   for (let i = 0; i < finais.length; i++) {
     const c = finais[i];
-    const meia = c.largura === 'metade' && !['secao', 'paragrafo', 'tabela', 'imagens', 'fixo'].includes(c.tipo);
+    const v = valores[c.id];
     const prox = finais[i + 1];
-    if (meia && prox && prox.largura === 'metade' && !['secao', 'paragrafo', 'tabela', 'imagens', 'fixo'].includes(prox.tipo)) {
+    if (c.largura === 'metade' && !largo(c) && prox && prox.largura === 'metade' && !largo(prox)) {
       blocos.push({
         chave: c.id + '+' + prox.id,
         no: (
           <div className="pp-dupla">
-            <BlocoCampo c={c} v={valores[c.id]} previa={previa} />
-            <BlocoCampo c={prox} v={valores[prox.id]} previa={previa} />
+            {env(c, <BlocoCampo c={c} v={v} previa={previa} />)}
+            {env(prox, <BlocoCampo c={prox} v={valores[prox.id]} previa={previa} />)}
           </div>
         ),
       });
       i++;
       continue;
     }
-    if (c.tipo === 'imagens' && Array.isArray(valores[c.id]) && valores[c.id].length > 2) {
+    if (c.tipo === 'imagens' && Array.isArray(v) && v.length > 2) {
       // fotos em linhas de duas, para quebrar página entre elas
-      const fotos = valores[c.id];
-      for (let k = 0; k < fotos.length; k += 2) {
+      for (let k = 0; k < v.length; k += 2) {
         blocos.push({
           chave: c.id + '-' + k,
-          no: (
+          no: env(c, (
             <div>
               {k === 0 && c.rotulo && <div className="pp-rotulo">{c.rotulo}</div>}
               <div className="pp-fotos">
-                {fotos.slice(k, k + 2).map((f, j) => (
+                {v.slice(k, k + 2).map((f, j) => (
                   <figure key={j}>
                     <img src={f.src} alt={f.legenda || ''} />
                     <figcaption><strong>Figura {k + j + 1}.</strong> {f.legenda}</figcaption>
@@ -304,17 +305,35 @@ export function blocosDoLaudo(modelo, valores, previa) {
                 ))}
               </div>
             </div>
-          ),
+          )),
         });
       }
       continue;
     }
-    blocos.push({ chave: c.id, no: <BlocoCampo c={c} v={valores[c.id]} previa={previa} />, junto: c.tipo === 'secao' });
+    // texto longo com vários parágrafos: um bloco por parágrafo, para a página quebrar entre eles
+    const partes = c.tipo === 'paragrafo' && !c.destaque && !campoVazio(c, v) ? String(v).split(/\n+/).filter((t) => t.trim()) : [];
+    if (partes.length > 1) {
+      partes.forEach((t, k) =>
+        blocos.push({
+          chave: c.id + '-p' + k,
+          aperto: k < partes.length - 1,
+          junto: k === 0,
+          no: env(c, (
+            <div className="pp-par">
+              {k === 0 && c.rotulo && <div className="pp-rotulo">{c.rotulo}</div>}
+              <p>{t}</p>
+            </div>
+          )),
+        }),
+      );
+      continue;
+    }
+    blocos.push({ chave: c.id, no: env(c, <BlocoCampo c={c} v={v} previa={previa} />), junto: c.tipo === 'secao' });
   }
   return blocos;
 }
 
-export function Laudo({ lab, modelo, entrada, valores, previa }) {
+export function Laudo({ lab, modelo, entrada, valores, previa, sel }) {
   const e = entrada;
   const liberado = !!e?.laudo?.liberadoEm;
   const cod = codigoVerificacao((e?.numero || 'previa') + (e?.laudo?.liberadoEm || ''));
@@ -358,7 +377,7 @@ export function Laudo({ lab, modelo, entrada, valores, previa }) {
       <span>Nº {e?.numero || '—'} · {pac.nome || 'Paciente'} · continuação</span>
     </div>
   );
-  const blocos = blocosDoLaudo(modelo, valores, previa);
+  const blocos = blocosDoLaudo(modelo, valores, previa, sel);
   blocos.push({
     chave: 'assinatura',
     no: (

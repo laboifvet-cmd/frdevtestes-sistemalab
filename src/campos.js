@@ -2,17 +2,17 @@
 import { uid } from './util.js';
 
 export const TIPOS = {
-  secao: { nome: 'Título de seção', dica: 'Separa o laudo em partes (ex.: Macroscopia)', icone: 'secao' },
-  texto: { nome: 'Texto curto', dica: 'Uma linha (ex.: local da lesão)', icone: 'texto' },
-  paragrafo: { nome: 'Texto longo', dica: 'Descrições, com frases prontas para inserir', icone: 'paragrafo' },
-  numero: { nome: 'Número', dica: 'Valor com unidade e referência', icone: 'numero' },
-  selecao: { nome: 'Lista de opções', dica: 'Escolhe uma opção numa lista', icone: 'selecao' },
-  unica: { nome: 'Escolha única', dica: 'Botões redondos, só uma opção', icone: 'unica' },
-  multipla: { nome: 'Caixas de marcar', dica: 'Marca várias opções', icone: 'multipla' },
-  tabela: { nome: 'Tabela', dica: 'Parâmetros, resultados e referências', icone: 'tabela' },
-  data: { nome: 'Data', dica: 'Ex.: data da coleta ou do óbito', icone: 'data' },
-  imagens: { nome: 'Fotos', dica: 'Fotos da lâmina ou da peça, com legenda', icone: 'imagens' },
-  fixo: { nome: 'Texto fixo', dica: 'Nota que sai igual em todo laudo', icone: 'fixo' },
+  secao: { nome: 'Título de seção', dica: 'Separa o laudo em partes (ex.: Macroscopia)', icone: 'secao', curto: 'Seção' },
+  texto: { nome: 'Texto curto', dica: 'Uma linha (ex.: local da lesão)', icone: 'texto', curto: 'Texto curto' },
+  paragrafo: { nome: 'Texto longo', dica: 'Descrições, com frases prontas para inserir', icone: 'paragrafo', curto: 'Texto longo' },
+  numero: { nome: 'Número', dica: 'Valor com unidade e referência', icone: 'numero', curto: 'Número' },
+  selecao: { nome: 'Lista de opções', dica: 'Escolhe uma opção numa lista', icone: 'selecao', curto: 'Lista' },
+  unica: { nome: 'Escolha única', dica: 'Botões redondos, só uma opção', icone: 'unica', curto: 'Escolha única' },
+  multipla: { nome: 'Caixas de marcar', dica: 'Marca várias opções', icone: 'multipla', curto: 'Caixas' },
+  tabela: { nome: 'Tabela', dica: 'Parâmetros, resultados e referências', icone: 'tabela', curto: 'Tabela' },
+  data: { nome: 'Data', dica: 'Ex.: data da coleta ou do óbito', icone: 'data', curto: 'Data' },
+  imagens: { nome: 'Fotos', dica: 'Fotos da lâmina ou da peça, com legenda', icone: 'imagens', curto: 'Fotos' },
+  fixo: { nome: 'Texto fixo', dica: 'Nota que sai igual em todo laudo', icone: 'fixo', curto: 'Nota fixa' },
 };
 
 export const ORDEM_TIPOS = ['secao', 'texto', 'paragrafo', 'numero', 'selecao', 'unica', 'multipla', 'tabela', 'data', 'imagens', 'fixo'];
